@@ -30,7 +30,7 @@ It’s built with **Node.js**, **Express**, **MongoDB**, and **EJS**, featuring 
 ## 🚀 Getting Started
 
 ### 1. Clone this repo
-bash
+```bash
 git clone https://github.com/YOUR-USERNAME/YOUR-REPO-NAME.git
 cd YOUR-REPO-NAME
 
@@ -49,6 +49,7 @@ npm start
 Then visit:
 👉 http://localhost:3000
 
+```
 ---
 
 ## 🗂️ Folder Structure
