@@ -1,3 +1,21 @@
+// <!-- Project Foundation  
+// This project was built using a template as a starting point and customized to fit the app’s unique features and design.  
+// All final code and design choices were reviewed, tested, and implemented by the author.
+//  -->
+
+
+
+// <!-- //  AI Assistance
+// // Parts of this code were assisted with the use of ChatGPT as a learning tool.
+// // All final code was reviewed, tested, and modified by the project author.
+
+//  -->
+
+
+
+
+
+
 // // var thumbUp = document.getElementsByClassName("fa-fa-magic");
 // // var thumbDown = document.getElementsByClassName("fa-fa-cloud");
 // // var trash = document.getElementsByClassName("fa-trash");
