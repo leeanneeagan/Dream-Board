@@ -1,65 +1,20 @@
-// document.addEventListener('DOMContentLoaded', () => {
-//   document.querySelectorAll('.entry').forEach(entry => {
-//     const id = entry.querySelector('.delete-btn').dataset.id;
-//     const titleEl = entry.querySelector('.entry-title');
-//     const contentEl = entry.querySelector('.entry-content p');
-//     const editBtn = entry.querySelector('.btn-info');
-//     const deleteBtn = entry.querySelector('.delete-btn');
-
-//     // DELETE
-//     deleteBtn?.addEventListener('click', () => {
-//       fetch(`/dreams/${id}`, { method: 'DELETE' })
-//         .then(res => {
-//           if (res.ok) {
-//             // Remove the entry from the DOM
-//             entry.remove();
-//           } else {
-//             console.log('Failed to delete dream');
-//           }
-//         })
-//         .catch(err => console.log(err));
-//     });
-
-//     // EDIT (inline)
-//     editBtn?.addEventListener('click', (e) => {
-//       e.preventDefault();
-
-//       // Replace title and content with inputs
-//       const titleInput = document.createElement('input');
-//       titleInput.type = 'text';
-//       titleInput.value = titleEl.innerText;
-//       titleInput.classList.add('entry-title-input');
-//       titleEl.replaceWith(titleInput);
-
-//       const contentInput = document.createElement('textarea');
-//       contentInput.value = contentEl.innerText;
-//       contentInput.classList.add('entry-content-input');
-//       contentEl.replaceWith(contentInput);
-
-//       // Create SAVE button
-//       const saveBtn = document.createElement('button');
-//       saveBtn.innerText = 'Save';
-//       saveBtn.classList.add('btn', 'btn-success');
-//       editBtn.replaceWith(saveBtn);
-
-// // fetch(`/dreams/${id}`, {
-// //   method: 'PUT',
-// //   headers: { 'Content-Type': 'application/json' },
-// //   body: JSON.stringify({ title, content })
-// // // })
-
-
-//     });
-//   });
-// });
-
-
 document.addEventListener('DOMContentLoaded', () => {
-  let dreams = document.querySelectorAll(".entry");
-  let editIcons = document.getElementsByClassName("fa-pen");
-  let deleteIcons = document.getElementsByClassName("fa-trash");
-  let preview = null;
-  let isPreviewMode = false;
+  // ------------------
+  // SELECT ELEMENTS
+  // ------------------
+  const editIcons = document.getElementsByClassName('fa-pencil');
+  const deleteIcons = document.getElementsByClassName('fa-trash');
+  const editForm = document.querySelector('#edit-dream-form');
+  const editSection = document.querySelector('#edit-section');
+  const previewArea = document.querySelector('#preview-area');
+  const cancelEditBtn = document.querySelector('#cancel-edit');
+  
+  console.log('Page loaded, elements found:', {
+    editIcons: editIcons.length,
+    deleteIcons: deleteIcons.length,
+    editForm: !!editForm,
+    editSection: !!editSection
+  });
 
   // ------------------
   // DELETE DREAM
@@ -67,82 +22,163 @@ document.addEventListener('DOMContentLoaded', () => {
   Array.from(deleteIcons).forEach(icon => {
     icon.addEventListener('click', e => {
       e.stopPropagation();
-      const dreamId = e.target.closest('.entry').dataset.id;
+      const entry = e.target.closest('.entry');
+      const dreamId = entry.dataset.id;
+
+      if (!confirm('Are you sure you want to delete this dream?')) {
+        return;
+      }
 
       fetch(`/dreams/${dreamId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' }
       })
         .then(res => {
-          if (res.ok) window.location.reload();
+          if (res.ok) {
+            entry.remove();
+            console.log('Dream deleted successfully');
+          } else {
+            console.log('Failed to delete dream');
+            alert('Failed to delete dream');
+          }
         })
-        .catch(err => console.log(err));
+        .catch(err => {
+          console.error('Delete error:', err);
+          alert('Error deleting dream');
+        });
     });
   });
 
   // ------------------
-  // EDIT DREAM
+  // EDIT DREAM (pencil icon)
   // ------------------
-  Array.from(editIcons).forEach(icon => {
-    icon.addEventListener('click', async e => {
+  console.log('Number of edit icons found:', editIcons.length);
+  
+  Array.from(editIcons).forEach((icon, index) => {
+    console.log(`Setting up click handler for pencil icon ${index}`);
+    
+    icon.addEventListener('click', function(e) {
+      e.preventDefault();
       e.stopPropagation();
+      
+      console.log('Pencil clicked!');
 
-      // destroy preview mode
-      if (preview) {
-        preview.toTextArea();
-        preview = null;
-        isPreviewMode = false;
+      const entry = e.target.closest('.entry');
+      
+      if (!entry) {
+        console.error('Could not find parent .entry element');
+        return;
       }
 
-      // show form, hide preview area
-      document.querySelector('form').style.display = 'block';
-      document.querySelector('#preview-area').hidden = true;
-      document.querySelector('#preview-area').innerHTML = '';
+      const dreamId = entry.dataset.id;
+      const titleElement = entry.querySelector('.entry-title');
+      const contentElement = entry.querySelector('.entry-content p');
+      const moodElement = entry.querySelector('.entry-mood');
 
-      const dreamId = e.target.closest('.entry').dataset.id;
-      const res = await fetch(`/dreams/${dreamId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
+      if (!titleElement || !contentElement) {
+        console.error('Could not find title or content elements');
+        return;
+      }
 
-      const data = await res.json();
+      const title = titleElement.innerText;
+      const content = contentElement.innerText;
+      const mood = moodElement ? moodElement.innerText.replace('Mood: ', '') : '';
 
-      // populate form
-      document.querySelector('#title').value = data.title;
-      document.querySelector('#content').value = data.content;
+      console.log('Editing dream:', dreamId);
 
-      // update submit button
-      document.querySelector('button[type="submit"]').innerText = "Update Dream";
+      if (previewArea) previewArea.hidden = true;
+      
+      if (editSection) {
+        editSection.style.display = 'block';
+        console.log('Edit section visible');
+      }
 
-      // store dream id for update
-      document.querySelector('#dreamId').value = dreamId;
+      const dreamIdField = document.querySelector('#dreamId');
+      const titleField = document.querySelector('#title');
+      const contentField = document.querySelector('#content');
+      const moodField = document.querySelector('#mood');
+      
+      if (dreamIdField) dreamIdField.value = dreamId;
+      if (titleField) titleField.value = title;
+      if (contentField) contentField.value = content;
+      if (moodField) moodField.value = mood;
+
+      if (editSection) {
+        editSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     });
   });
 
   // ------------------
-  // PREVIEW DREAM
+  // CANCEL EDIT
   // ------------------
-  dreams.forEach(dream => {
-    dream.addEventListener('click', async e => {
-      const dreamId = e.currentTarget.dataset.id;
-
-      const res = await fetch(`/dreams/${dreamId}`, {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' }
-      });
-
-      const data = await res.json();
-
-      // hide form, show preview
-      document.querySelector('form').style.display = 'none';
-      const previewArea = document.querySelector('#preview-area');
-      previewArea.hidden = false;
-
-      // show title + content
-      previewArea.innerHTML = `
-        <h2>${data.title}</h2>
-        <p>${data.content}</p>
-      `;
+  if (cancelEditBtn) {
+    cancelEditBtn.addEventListener('click', () => {
+      editSection.style.display = 'none';
+      editForm.reset();
+      console.log('Edit cancelled');
     });
-  });
+  }
+
+  // ------------------
+  // HANDLE EDIT FORM SUBMISSION
+  // ------------------
+  if (editForm) {
+    editForm.addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const dreamId = document.querySelector('#dreamId').value;
+      const title = document.querySelector('#title').value;
+      const content = document.querySelector('#content').value;
+      const mood = document.querySelector('#mood').value;
+
+      console.log('Submitting update for dream:', dreamId);
+
+      try {
+        const res = await fetch(`/dreams/${dreamId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, content, mood })
+        });
+
+        if (res.ok) {
+          const updatedDream = await res.json();
+          console.log('Dream updated successfully:', updatedDream);
+
+          const entry = document.querySelector(`.entry[data-id="${dreamId}"]`);
+          if (entry) {
+            entry.querySelector('.entry-title').innerText = updatedDream.title;
+            entry.querySelector('.entry-content p').innerText = updatedDream.content;
+            
+            let moodElement = entry.querySelector('.entry-mood');
+            if (updatedDream.mood) {
+              if (moodElement) {
+                moodElement.innerHTML = `<em>Mood: ${updatedDream.mood}</em>`;
+              } else {
+                const contentDiv = entry.querySelector('.entry-content');
+                moodElement = document.createElement('div');
+                moodElement.className = 'entry-mood';
+                moodElement.innerHTML = `<em>Mood: ${updatedDream.mood}</em>`;
+                contentDiv.after(moodElement);
+              }
+            } else if (moodElement) {
+              moodElement.remove();
+            }
+          }
+
+          editSection.style.display = 'none';
+          editForm.reset();
+          
+          alert('Dream updated successfully!');
+        } else {
+          const error = await res.json();
+          console.error('Failed to update dream:', error);
+          alert('Failed to update dream: ' + (error.error || 'Unknown error'));
+        }
+      } catch (err) {
+        console.error('Error updating dream:', err);
+        alert('Error updating dream. Check console for details.');
+      }
+    });
+  }
 });

@@ -1,31 +1,28 @@
 // app/routes.js
+const { ObjectId } = require('mongodb');
+
 module.exports = function(app, passport, db) {
 
-  // NORMAL ROUTES ===============================================================
-
-  // home page
   app.get('/', function(req, res) {
     res.render('index.ejs');
   });
 
-  // PROFILE SECTION ===========================================================
+  
   app.get('/profile', isLoggedIn, function(req, res) {
-    // first get messages
     db.collection('messages').find().toArray((err, messages) => {
       if (err) return console.log(err)
-      // then get dreams for this user
+     
       db.collection('dreams').find({ userId: req.user._id }).toArray((err, dreams) => {
         if (err) return console.log(err)
         res.render('profile.ejs', {
           user: req.user,
-          messages,
-          dreams
+          messages: messages || [],
+          dreams: dreams || []
         })
       })
     })
   });
 
-  // LOGOUT ====================================================================
   app.get('/logout', function(req, res) {
     req.logout(() => {
       console.log('User has logged out!')
@@ -33,66 +30,94 @@ module.exports = function(app, passport, db) {
     res.redirect('/');
   });
 
-
-
-// DREAM ROUTES ================================================================
-app.get('/dreams', isLoggedIn, (req, res) => {
-  db.collection('dreams').find({ userId: req.user._id }).toArray((err, result) => {
-    if (err) return console.log(err)
-    res.render('profile.ejs', {
-      user: req.user,
-      dreams: result
-    })
-  })
-});
-
-app.post('/dreams', isLoggedIn, (req, res) => {
-  db.collection('dreams').save(
-    {
-      title: req.body.title,
-      content: req.body.content,
-      userId: req.user._id,
-      createdAt: new Date() // timestamp
-    },
-    (err, result) => {
+  // GET all dreams for logged in user
+  app.get('/dreams', isLoggedIn, (req, res) => {
+    db.collection('dreams').find({ userId: req.user._id }).toArray((err, result) => {
       if (err) return console.log(err)
-      console.log('Dream saved to database')
-      res.redirect('/profile')
+      res.render('profile.ejs', {
+        user: req.user,
+        dreams: result
+      })
+    })
+  });
+
+  // POST new dream
+  app.post('/dreams', isLoggedIn, (req, res) => {
+    db.collection('dreams').insertOne(
+      {
+        title: req.body.title,
+        content: req.body.content,
+        mood: req.body.mood || '',
+        userId: req.user._id,
+        createdAt: new Date()
+      },
+      (err, result) => {
+        if (err) return console.log(err)
+        console.log('Dream saved to database')
+        res.redirect('/profile')
+      }
+    )
+  });
+
+  // PUT (update) dream
+  app.put('/dreams/:id', isLoggedIn, (req, res) => {
+    const dreamId = req.params.id;
+    const { title, content, mood } = req.body;
+
+    // Validate ObjectId
+    if (!ObjectId.isValid(dreamId)) {
+      return res.status(400).json({ error: 'Invalid dream ID' });
     }
-  )
-})
 
-// ✏️ EDIT a dream
-app.put('/dreams/:id', isLoggedIn, (req, res) => {
-  const dreamId = req.params.id
-  const { title, content } = req.body
+    db.collection('dreams').findOneAndUpdate(
+      { _id: new ObjectId(dreamId), userId: req.user._id },
+      { 
+        $set: { 
+          title: title, 
+          content: content,
+          mood: mood || '',
+          updatedAt: new Date()
+        } 
+      },
+      { returnDocument: 'after' }
+    )
+    .then(result => {
+      if (!result.value) {
+        return res.status(404).json({ error: 'Dream not found' });
+      }
+      console.log('Dream updated!');
+      res.json(result.value);
+    })
+    .catch(err => {
+      console.error('Update error:', err);
+      res.status(500).json({ error: 'Failed to update dream' });
+    });
+  });
 
-  db.collection('dreams').findOneAndUpdate(
-    { _id: require('mongodb').ObjectId(dreamId), userId: req.user._id },
-    { $set: { title, content } },
-    { returnDocument: 'after' },
-    (err, result) => {
-      if (err) return res.status(500).send(err)
-      console.log('Dream updated!')
-      res.send(result.value)
+  // DELETE dream
+  app.delete('/dreams/:id', isLoggedIn, (req, res) => {
+    const dreamId = req.params.id;
+    
+    // Validate ObjectId
+    if (!ObjectId.isValid(dreamId)) {
+      return res.status(400).json({ error: 'Invalid dream ID' });
     }
-  )
-})
 
-app.delete('/dreams/:id', isLoggedIn, (req, res) => {
-  const dreamId = req.params.id;
-  db.collection('dreams').deleteOne(
-    { _id: require('mongodb').ObjectId(dreamId), userId: req.user._id },
-    (err, result) => {
-      if (err) return res.status(500).send(err);
-      res.send('Dream deleted!');
-    }
-  );
-});
-
-
-
-
+    db.collection('dreams').deleteOne(
+      { _id: new ObjectId(dreamId), userId: req.user._id }
+    )
+    .then(result => {
+      if (result.deletedCount === 0) {
+        return res.status(404).json({ error: 'Dream not found' });
+      }
+      console.log('Dream deleted!');
+      res.json({ message: 'Dream deleted!' });
+    })
+    .catch(err => {
+      console.error('Delete error:', err);
+      res.status(500).json({ error: 'Failed to delete dream' });
+    });
+  });
 
   // AUTHENTICATION ROUTES =======================================================
 
@@ -106,13 +131,6 @@ app.delete('/dreams/:id', isLoggedIn, (req, res) => {
     failureRedirect: '/login',
     failureFlash: true
   }));
-
-
-
-
-
-
-
 
   // SIGNUP
   app.get('/signup', function(req, res) {
