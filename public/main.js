@@ -25,9 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const entry = e.target.closest('.entry');
       const dreamId = entry.dataset.id;
 
-      if (!confirm('Are you sure you want to delete this dream?')) {
-        return;
-      }
 
       fetch(`/dreams/${dreamId}`, {
         method: 'DELETE',
@@ -39,12 +36,12 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log('Dream deleted successfully');
           } else {
             console.log('Failed to delete dream');
-            alert('Failed to delete dream');
+         
           }
         })
         .catch(err => {
           console.error('Delete error:', err);
-          alert('Error deleting dream');
+       
         });
     });
   });
@@ -169,15 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
           editSection.style.display = 'none';
           editForm.reset();
           
-          alert('Dream updated successfully!');
+   
         } else {
           const error = await res.json();
           console.error('Failed to update dream:', error);
-          alert('Failed to update dream: ' + (error.error || 'Unknown error'));
+        
         }
       } catch (err) {
         console.error('Error updating dream:', err);
-        alert('Error updating dream. Check console for details.');
+     
       }
     });
   }
