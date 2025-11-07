@@ -26,7 +26,7 @@
         <% } %>
 
         <% dreams.forEach(dream => { %>
-          <div class="entry mb-3 p-2 border rounded">
+          <div class="entry mb-3 p-2 border rounded" data-id="<%= dream._id %>">
             <div class="entry-header">
               <strong class="entry-title"><%= dream.title %></strong>
             </div>
@@ -37,14 +37,15 @@
               <div class="entry-mood"><em>Mood: <%= dream.mood %></em></div>
             <% } %>
             <div class="entry-date"><small>Saved on <%= new Date(dream.createdAt).toLocaleString() %></small></div>
+
+
             <div class="entry-actions mt-2">
-              <a href="/dreams/<%= dream._id %>/edit" class="btn btn-info btn-xs">
-                <i class="fa fa-pencil"></i> Edit
-              </a>
-              <button class="btn btn-danger btn-xs delete-btn" data-id="<%= dream._id %>">
-                <i class="fa fa-trash"></i> Delete
-              </button>
+              <i class="fa fa-pen text-info" style="cursor:pointer; margin-right:8px;"></i>
+              <i class="fa fa-trash text-danger" style="cursor:pointer;"></i>
             </div>
+            
+
+
           </div>
         <% }) %>
 
@@ -59,11 +60,24 @@
           </form>
         <% } %>
 
+
+        <!-- Preview Area -->
+<div id="preview-area" hidden class="mt-3 p-3 border rounded bg-light"></div>
+
+<!-- Edit Dream Form (hidden by default) -->
+<form id="edit-dream-form" class="mt-3" style="display:none;">
+  <input type="hidden" id="dreamId" />
+  <input type="text" id="title" name="title" class="form-control mb-2" placeholder="Edit title">
+  <textarea id="content" name="content" class="form-control mb-2" placeholder="Edit dream content"></textarea>
+  <button type="submit" class="btn btn-primary">Update Dream</button>
+</form>
+
       </div>
     </div>
 
   </div>
 
-  <script src="main.js"></script>
+  <script src="/main.js"></script>
+
 </body>
 </html>

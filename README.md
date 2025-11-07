@@ -81,7 +81,7 @@ Then visit:
 - Users register and log in via Passport local strategy.
 - Once logged in, they can add messages to the shared board.
 - Messages are stored in MongoDB and rendered dynamically using EJS.
-- Users can like (☁️) or dislike (🌧️) dreams, or delete (🗑️) their own.
+- Users can ADD, EDIT,  dreams entries, or DELETE.
 - Logout clears the session, returning them to the login screen.
 
 ---
@@ -89,14 +89,14 @@ Then visit:
 ##  Example
 - A typical dream entry looks like:
 - Name: leeanneeagan@example.com
-- Message: “Move to Paris and open a cozy coffee shop!”
-- Likes: ☁️☁️☁️
+- Message: “Dreamt of a move to Paris and opened a cozy coffee shop!”
+- Mood: Sleepy
 
 ---
 
 ##  Future Enhancements
 - User profile pages with uploaded dream images
-- Category filters (career, travel, personal growth)
+- Category filters 
 - Public/private dream toggles
 - Notifications for dream “likes”
 - Cloud-themed animations ☁️💭
